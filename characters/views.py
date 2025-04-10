@@ -1,6 +1,7 @@
 import random
 
 from django.db.models import QuerySet
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import status, generics
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -9,11 +10,14 @@ from characters.models import Character
 from characters.serializers import CharacterSerializer
 
 
+@extend_schema(
+    responses={
+        status.HTTP_200_OK: CharacterSerializer,
+    }
+)
 @api_view(["GET"])
 def get_random_character_view(request):
-    """
-    Returns a random character from the Rick and Morty API.
-    """
+    """Returns a random character from the Rick and Morty API."""
     pks = Character.objects.values_list("pk", flat=True)
     random_pk = random.choice(pks)
     random_character = Character.objects.get(pk=random_pk)
@@ -22,9 +26,6 @@ def get_random_character_view(request):
 
 
 class CharacterListView(generics.ListAPIView):
-    """
-    Returns a list of characters from the Rick and Morty API for given name.
-    """
     serializer_class = CharacterSerializer
 
     def get_queryset(self) -> QuerySet:
@@ -33,3 +34,17 @@ class CharacterListView(generics.ListAPIView):
         if name:
             queryset = queryset.filter(name__icontains=name)
         return queryset
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="name",
+                type=str,
+                description="Filter characters by name",
+                required=False,
+            ),
+        ]
+    )
+    def get(self, request, *args, **kwargs) -> Response:
+        """Returns a list of characters from the Rick and Morty API for given name."""
+        return super().get(request, *args, **kwargs)

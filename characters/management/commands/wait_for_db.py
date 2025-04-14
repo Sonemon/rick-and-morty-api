@@ -2,7 +2,7 @@ import time
 
 from django.core.management import BaseCommand
 from django.db import connections
-from psycopg2 import OperationalError
+from django.db.utils import OperationalError
 
 
 class Command(BaseCommand):
